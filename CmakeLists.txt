@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.20)
+project(storcliTUI LANGUAGES CXX)
+
+# Enforce standard C++20 for native compiler coroutine support
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_executable(storcliTUI 
+    main.cpp
+)
+
+target_include_directories(storcliTUI PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/cpp-tui
+    C:/msys64/mingw64/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/json/single_include
+)
+
