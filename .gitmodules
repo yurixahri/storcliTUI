@@ -1,0 +1,6 @@
+[submodule "libs/cpp-tui"]
+	path = libs/cpp-tui
+	url = https://github.com/jonoton/cpp-tui
+[submodule "libs/json"]
+	path = libs/json
+	url = https://github.com/nlohmann/json
