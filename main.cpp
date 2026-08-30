@@ -146,6 +146,7 @@ void controller_dashboard_scene(std::shared_ptr<Vertical> root, App &app){
     root->add(std::make_shared<VerticalSpacer>(1));
     root->add(drive_panel_border);
     root->add(help);
+    help->set_focus(true);
 
     bg_job = std::jthread([info_panel_border, vd_panel_border, drive_panel_border, cv_panel_border, &app](std::stop_token token){
         while(!token.stop_requested()){
@@ -294,7 +295,7 @@ void controller_select_scene(std::shared_ptr<Vertical> root, App &app){
             controller_index = ctrl_index;
             controller_dashboard_scene(root, app);
         });
-
+        
         btn->on_custom_focus = [ctrl_id, bottom_status](bool is_focused) {
             if (is_focused){
                 bottom_status->set_text("Selecting: " + ctrl_id);
