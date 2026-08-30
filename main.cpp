@@ -161,6 +161,7 @@ void controller_dashboard_scene(std::shared_ptr<Vertical> root, App &app){
             info_panel_border->clear_children();
             vd_panel_border->clear_children();
             drive_panel_border->clear_children();
+            cv_panel_border->clear_children();
             
             if (token.stop_requested()) break;
             auto info_panel_layout = std::make_shared<Vertical>();
@@ -246,9 +247,9 @@ void controller_dashboard_scene(std::shared_ptr<Vertical> root, App &app){
             drive_panel_border->min_height = 6;
             cv_panel_border->min_height = 10;
             app.update();
-            for (int i = 0; i < 500; ++i) {
+            for (int i = 0; i < 50; ++i) {
                 if (token.stop_requested()) break;
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         }
     });
