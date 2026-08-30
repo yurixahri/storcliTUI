@@ -4,6 +4,8 @@ project(storcliTUI LANGUAGES CXX)
 # Enforce standard C++20 for native compiler coroutine support
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(BUILD_SHARED_LIBS OFF)
+set(CMAKE_FIND_LIBRARY_SUFFIXES ".a;lib") 
 
 add_executable(storcliTUI 
     main.cpp

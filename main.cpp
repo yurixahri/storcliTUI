@@ -118,7 +118,6 @@ void controller_dashboard_scene(std::shared_ptr<Vertical> root, App &app){
     auto info_panel_border = std::make_shared<Border>(BorderStyle::Rounded);
     info_panel_border->set_title("Controller Info");
     info_panel_border->set_color(Color(227, 242, 253));
-    
 
     auto vd_panel_border = std::make_shared<Border>(BorderStyle::Rounded);
     vd_panel_border->set_title("Virtual Drives");
@@ -140,11 +139,23 @@ void controller_dashboard_scene(std::shared_ptr<Vertical> root, App &app){
     cv_info_layout->add(info_panel_border);
     cv_info_layout->add(std::make_shared<HorizontalSpacer>(1));
     cv_info_layout->add(cv_panel_border);
-    root->add(cv_info_layout);
-    root->add(std::make_shared<VerticalSpacer>(1));
-    root->add(vd_panel_border);
-    root->add(std::make_shared<VerticalSpacer>(1));
-    root->add(drive_panel_border);
+
+    auto layout_v = std::make_shared<Vertical>();
+    auto layout_h = std::make_shared<Horizontal>();
+
+    layout_v->add(std::make_shared<VerticalSpacer>(1));
+    layout_v->add(cv_info_layout);
+    layout_v->add(std::make_shared<VerticalSpacer>(1));
+    layout_v->add(vd_panel_border);
+    layout_v->add(std::make_shared<VerticalSpacer>(1));
+    layout_v->add(drive_panel_border);
+    layout_v->add(std::make_shared<VerticalSpacer>(1));
+
+    layout_h->add(std::make_shared<HorizontalSpacer>(1));
+    layout_h->add(layout_v);
+    layout_h->add(std::make_shared<HorizontalSpacer>(1));
+    
+    root->add(layout_h);
     root->add(help);
     help->set_focus(true);
 
@@ -152,9 +163,12 @@ void controller_dashboard_scene(std::shared_ptr<Vertical> root, App &app){
         while(!token.stop_requested()){
             if (token.stop_requested()) break;
             std::string cmd = "/c"+ std::to_string(controller_index) +" show J";
-            
+            std::string cmd_drives = "/c"+ std::to_string(controller_index) +" /eall/sall show all J";
+
             json data = json::parse( storcli_output(cmd) );
+            json data_drives = json::parse( storcli_output(cmd_drives) );
             json response_data = data["Controllers"][0]["Response Data"];
+            json response_data_drives = data_drives["Controllers"][0]["Response Data"];
             if (token.stop_requested()) break;
             
             
@@ -184,6 +198,7 @@ void controller_dashboard_scene(std::shared_ptr<Vertical> root, App &app){
             
             auto vd_panel_layout = std::make_shared<Horizontal>();
             for (const auto &vd : response_data["VD LIST"]){
+                vd_panel_layout->add(std::make_shared<HorizontalSpacer>(1));
                 auto vd_border = std::make_shared<Border>(BorderStyle::ASCII);
                 vd_border->set_title( vd["DG/VD"].dump() );
                 vd_border->set_color(Color(127, 142, 153));
@@ -204,26 +219,39 @@ void controller_dashboard_scene(std::shared_ptr<Vertical> root, App &app){
                 vd_border->add(vd_layout);
                 vd_panel_layout->add(vd_border);
             }
-            
+            vd_panel_layout->add(std::make_shared<HorizontalSpacer>(1));
+
             auto drive_panel_layout = std::make_shared<Horizontal>();
-            for (const auto &drive : response_data["PD LIST"]){
+            for (const auto &element : response_data_drives.items()){
+                std::string key_name = element.key(); 
+                if (key_name.find("Detailed Information") != std::string::npos) continue;
+
+                json drive = element.value();
+                json drive_detailed_state = response_data_drives[key_name + " - Detailed Information"][key_name + " State"];
+
+                drive_panel_layout->add(std::make_shared<HorizontalSpacer>(1));
                 auto drive_border = std::make_shared<Border>(BorderStyle::ASCII);
-                drive_border->set_title( drive["EID:Slt"].dump() );
+                drive_border->set_title( drive[0]["EID:Slt"].dump() );
                 drive_border->set_color(Color(127, 142, 153));
                 
                 auto drive_layout = std::make_shared<Vertical>();
-                auto drive_dg = std::make_shared<Label>( "DG: " + drive["DG"].dump() );
-                auto drive_state = std::make_shared<Label>( "State: " + drive["State"].dump() );
-                auto drive_size = std::make_shared<Label>( "Size: " + drive["Size"].dump() );
-                auto drive_model = std::make_shared<Label>( "Model: " + drive["Model"].dump() );
+                auto drive_dg = std::make_shared<Label>( "DG: " + drive[0]["DG"].dump() );
+                auto drive_state = std::make_shared<Label>( "State: " + drive[0]["State"].dump() );
+                auto drive_size = std::make_shared<Label>( "Size: " + drive[0]["Size"].dump() );
+                auto drive_model = std::make_shared<Label>( "Model: " + drive[0]["Model"].dump() );
+                auto drive_temp = std::make_shared<Label>( "Temp: " + drive_detailed_state["Drive Temperature"].dump() );
+                auto drive_predict_failure = std::make_shared<Label>( "Predictive Failure Count: " + drive_detailed_state["Predictive Failure Count"].dump() );
                 
                 drive_layout->add(drive_dg);
                 drive_layout->add(drive_state);
                 drive_layout->add(drive_size);
                 drive_layout->add(drive_model);
+                drive_layout->add(drive_temp);
+                drive_layout->add(drive_predict_failure);
                 drive_border->add(drive_layout);
                 drive_panel_layout->add(drive_border);
             }
+            drive_panel_layout->add(std::make_shared<HorizontalSpacer>(1));
 
             auto cv_panel_layout = std::make_shared<Vertical>();
             auto cv_model = std::make_shared<Label>( "Model: " + response_data["Cachevault_Info"][0]["Model"].dump() );
@@ -244,7 +272,7 @@ void controller_dashboard_scene(std::shared_ptr<Vertical> root, App &app){
 
             info_panel_border->min_height = 10;
             vd_panel_border->min_height = 8;
-            drive_panel_border->min_height = 6;
+            drive_panel_border->min_height = 8;
             cv_panel_border->min_height = 10;
             app.update();
             for (int i = 0; i < 50; ++i) {
@@ -351,6 +379,7 @@ int main() {
     
     controller_select_scene(root_layout, app);
     app.register_exit_key('q');
+    app.register_exit_key('c', true);
     app.run(root_layout);
 
     return 0;
